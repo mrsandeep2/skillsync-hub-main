@@ -1,0 +1,139 @@
+/* Services page specific styles */
+
+.services-page-root {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Deep neon / glassy background just for Services page */
+.services-page-root::before,
+.services-page-root::after {
+  content: "";
+  position: fixed;
+  inset: -40%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.services-page-root::before {
+  background:
+    radial-gradient(circle at 10% 20%, rgba(129, 140, 248, 0.28), transparent 55%),
+    radial-gradient(circle at 80% 80%, rgba(56, 189, 248, 0.22), transparent 55%),
+    radial-gradient(circle at 50% 0%, rgba(236, 72, 153, 0.22), transparent 55%);
+  filter: blur(12px);
+  opacity: 0.9;
+}
+
+.services-page-root::after {
+  background:
+    radial-gradient(circle at 20% 80%, rgba(248, 250, 252, 0.06), transparent 55%),
+    radial-gradient(circle at 90% 10%, rgba(59, 130, 246, 0.22), transparent 55%);
+  mix-blend-mode: screen;
+  opacity: 0.7;
+}
+
+/* Elevate the actual content above the background glows */
+.services-page-root > .container {
+  position: relative;
+  z-index: 1;
+}
+
+/* Glass filter bar */
+.services-page-root .services-filter-bar {
+  backdrop-filter: blur(26px);
+  -webkit-backdrop-filter: blur(26px);
+  background: linear-gradient(
+    120deg,
+    rgba(15, 23, 42, 0.88),
+    rgba(30, 64, 175, 0.55),
+    rgba(56, 189, 248, 0.35)
+  );
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  box-shadow:
+    0 18px 60px rgba(15, 23, 42, 0.9),
+    0 0 0 1px rgba(15, 23, 42, 0.7) inset;
+}
+
+.services-page-root .services-filter-bar input,
+.services-page-root .services-filter-bar .bg-secondary\/30 {
+  background-color: rgba(15, 23, 42, 0.55) !important;
+}
+
+/* Service cards: stronger glass + hover animation */
+.services-page-root .service-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  background: radial-gradient(circle at top left, rgba(248, 250, 252, 0.05), transparent 55%),
+    rgba(15, 23, 42, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  box-shadow:
+    0 18px 55px rgba(15, 23, 42, 0.9),
+    0 0 0 1px rgba(15, 23, 42, 0.8) inset;
+  transition:
+    transform 220ms ease,
+    box-shadow 220ms ease,
+    border-color 220ms ease,
+    background 220ms ease;
+}
+
+.services-page-root .service-card::before {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: conic-gradient(
+    from 180deg,
+    rgba(96, 165, 250, 0.15),
+    rgba(14, 165, 233, 0.25),
+    rgba(236, 72, 153, 0.25),
+    transparent 55%
+  );
+  opacity: 0;
+  transition: opacity 220ms ease, transform 220ms ease;
+  transform: scale(0.95);
+  pointer-events: none;
+}
+
+.services-page-root .service-card:hover {
+  transform: translateY(-6px) scale(1.01);
+  border-color: rgba(236, 72, 153, 0.8);
+  background: radial-gradient(circle at top right, rgba(236, 72, 153, 0.18), transparent 55%),
+    rgba(15, 23, 42, 0.98);
+  box-shadow:
+    0 26px 80px rgba(15, 23, 42, 0.95),
+    0 0 0 1px rgba(236, 72, 153, 0.8) inset;
+}
+
+.services-page-root .service-card:hover::before {
+  opacity: 1;
+  transform: scale(1.02);
+}
+
+/* Subtle shimmer underline on category pill */
+.services-page-root .service-card .service-category-pill {
+  position: relative;
+  overflow: hidden;
+}
+
+.services-page-root .service-card .service-category-pill::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(248, 250, 252, 0.7),
+    transparent
+  );
+  opacity: 0;
+  transform: translateX(-40%);
+  transition: opacity 220ms ease, transform 320ms ease;
+}
+
+.services-page-root .service-card:hover .service-category-pill::after {
+  opacity: 1;
+  transform: translateX(40%);
+}
+
+

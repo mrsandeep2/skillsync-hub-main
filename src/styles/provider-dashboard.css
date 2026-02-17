@@ -1,0 +1,22 @@
+/* Provider dashboard specific styles
+   Locked colors so global theme changes don't affect this area. */
+
+.provider-dashboard-root {
+  background: radial-gradient(circle at 0% 20%, rgba(56, 189, 248, 0.18), transparent 55%),
+    radial-gradient(circle at 100% 80%, rgba(129, 140, 248, 0.22), transparent 55%),
+    #020617;
+  color: #e5e7eb;
+}
+
+.provider-dashboard-root .glass {
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  background: rgba(15, 23, 42, 0.94);
+  border-color: rgba(148, 163, 184, 0.45);
+}
+
+.provider-dashboard-root .glass-hover:hover {
+  box-shadow: 0 20px 55px rgba(15, 23, 42, 0.95);
+}
+
+

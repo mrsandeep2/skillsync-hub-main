@@ -1,0 +1,22 @@
+/* Admin dashboard specific styles
+   Locked palette so global site color changes don't alter admin view. */
+
+.admin-dashboard-root {
+  background: radial-gradient(circle at 10% 0%, rgba(251, 191, 36, 0.15), transparent 55%),
+    radial-gradient(circle at 90% 100%, rgba(59, 130, 246, 0.25), transparent 55%),
+    #020617;
+  color: #e5e7eb;
+}
+
+.admin-dashboard-root .glass {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(15, 23, 42, 0.95);
+  border-color: rgba(148, 163, 184, 0.5);
+}
+
+.admin-dashboard-root .glass-hover:hover {
+  box-shadow: 0 22px 60px rgba(15, 23, 42, 0.95);
+}
+
+
