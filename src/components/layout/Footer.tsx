@@ -1,52 +1,166 @@
 import { Link } from "react-router-dom";
+import { Facebook, Twitter, Instagram, Linkedin } from "lucide-react";
 
 const Footer = () => {
   return (
-    <footer className="relative border-t border-white/10 py-16 bg-background/60 backdrop-blur-md">
-      <div className="container px-4">
-        <div className="grid md:grid-cols-4 gap-10">
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-sm">SS</span>
+    <footer className="relative py-16 bg-background">
+      <div className="container px-6">
+        <div
+          className="
+            relative rounded-2xl p-10
+            bg-background/80 backdrop-blur-xl
+            shadow-2xl
+            border border-yellow-400 dark:border-white/10
+          "
+        >
+          {/* 5 Column Layout */}
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-10">
+
+            {/* Brand Section */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 
+                                flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-sm">SS</span>
+                </div>
+                <span className="font-display font-bold text-2xl text-foreground">
+                  SuperService
+                </span>
               </div>
-              <span className="font-display font-bold text-lg text-foreground">SuperService</span>
+
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                India’s trusted marketplace for verified services. 
+                Book professionals instantly or grow your freelance career with us.
+              </p>
+
+              {/* Stats */}
+              <div className="flex gap-6 text-sm">
+                <div>
+                  <p className="text-purple-500 font-semibold text-lg">10K+</p>
+                  <p className="text-slate-500">Professionals</p>
+                </div>
+                <div>
+                  <p className="text-purple-500 font-semibold text-lg">50K+</p>
+                  <p className="text-slate-500">Bookings</p>
+                </div>
+                <div>
+                  <p className="text-purple-500 font-semibold text-lg">4.8★</p>
+                  <p className="text-slate-500">Rating</p>
+                </div>
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              The universal marketplace for all services. Connect, book, and get things done.
-            </p>
+
+            <FooterColumn
+              title="Platform"
+              links={[
+                { label: "Browse Services", to: "/" },
+                { label: "Become a Provider", to: "/register?role=provider" },
+                { label: "Enterprise", to: "/" },
+              ]}
+            />
+
+            <FooterColumn
+              title="Company"
+              links={[
+                { label: "About", to: "/about" },
+                { label: "Careers", to: "/" },
+                { label: "Blog", to: "/" },
+              ]}
+            />
+
+            <FooterColumn
+              title="Support"
+              links={[
+                { label: "Help Center", to: "/" },
+                { label: "Trust & Safety", to: "/" },
+                { label: "Contact", to: "/" },
+              ]}
+            />
+
+            {/* Social Media Column */}
+            <div>
+              <h4 className="font-display font-semibold text-purple-600 mb-6 text-lg">
+                Social Media
+              </h4>
+
+              <div className="flex flex-col gap-4">
+                {[
+                  { icon: Facebook, label: "Facebook" },
+                  { icon: Twitter, label: "Twitter" },
+                  { icon: Instagram, label: "Instagram" },
+                  { icon: Linkedin, label: "LinkedIn" },
+                ].map((item, i) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={i}
+                      className="
+                        flex items-center gap-3
+                        text-sm text-slate-500
+                        hover:text-cyan-500
+                        hover:scale-105
+                        active:scale-95
+                        transition-all duration-300
+                      "
+                    >
+                      <div
+                        className="
+                          w-9 h-9 flex items-center justify-center
+                          rounded-lg
+                          border border-yellow-400/40
+                          hover:bg-purple-500/10
+                          transition-all duration-300
+                        "
+                      >
+                        <Icon size={16} />
+                      </div>
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
           </div>
-          <div>
-            <h4 className="font-display font-semibold text-foreground mb-4">Platform</h4>
-            <div className="space-y-2">
-              <Link to="/" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Browse Services</Link>
-              <Link to="/register?role=provider" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Become a Provider</Link>
-              <Link to="/" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Enterprise</Link>
+
+          {/* Bottom Section */}
+          <div className="mt-12 pt-6 border-t border-yellow-400/30 dark:border-white/10 flex flex-col md:flex-row justify-between items-center text-sm text-slate-500">
+            <p>© 2026 SuperService. All rights reserved.</p>
+
+            <div className="flex gap-6 mt-4 md:mt-0">
+              <Link to="/" className="hover:text-cyan-500 transition-all">
+                Privacy Policy
+              </Link>
+              <Link to="/" className="hover:text-cyan-500 transition-all">
+                Terms of Service
+              </Link>
             </div>
           </div>
-          <div>
-            <h4 className="font-display font-semibold text-foreground mb-4">Company</h4>
-            <div className="space-y-2">
-              <Link to="/about" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">About</Link>
-              <Link to="/" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Careers</Link>
-              <Link to="/" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Blog</Link>
-            </div>
-          </div>
-          <div>
-            <h4 className="font-display font-semibold text-foreground mb-4">Support</h4>
-            <div className="space-y-2">
-              <Link to="/" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Help Center</Link>
-              <Link to="/" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Trust & Safety</Link>
-              <Link to="/" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Contact</Link>
-            </div>
-          </div>
-        </div>
-        <div className="border-t border-border mt-12 pt-8 text-center text-sm text-muted-foreground">
-          © 2026 SuperService. All rights reserved.
+
         </div>
       </div>
     </footer>
   );
 };
+
+const FooterColumn = ({ title, links }) => (
+  <div>
+    <h4 className="font-display font-semibold text-purple-600 mb-6 text-lg">
+      {title}
+    </h4>
+
+    <div className="flex flex-col gap-4">
+      {links.map((link, index) => (
+        <Link
+          key={index}
+          to={link.to}
+          className="text-sm text-slate-500 hover:text-cyan-500 hover:scale-105 active:scale-95 transition-all duration-300"
+        >
+          {link.label}
+        </Link>
+      ))}
+    </div>
+  </div>
+);
 
 export default Footer;
