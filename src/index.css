@@ -5,67 +5,75 @@
 @tailwind utilities;
 
 /* ===============================
-   ROOT THEME
+   ROOT THEME (global site only; dashboards use their own CSS)
 =============================== */
 
 @layer base {
   :root {
-
-    --background: 222 47% 8%;
+    --background: 222 47% 6%;
     --foreground: 210 40% 98%;
 
-    --card: 222 47% 11%;
+    --card: 222 47% 10%;
     --card-foreground: 210 40% 98%;
 
-    --primary: 262 83% 58%;
+    --primary: 270 91% 65%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 217 33% 17%;
+    --secondary: 217 33% 14%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217 33% 20%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 217 33% 18%;
+    --muted-foreground: 215 20% 70%;
 
-    --accent: 190 95% 55%;
+    --accent: 187 92% 55%;
     --accent-foreground: 222 47% 8%;
 
     --destructive: 0 72% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 217 33% 20%;
-    --input: 217 33% 20%;
-    --ring: 262 83% 58%;
+    --border: 217 33% 22%;
+    --input: 217 33% 18%;
+    --ring: 270 91% 65%;
 
     --radius: 1rem;
 
-    --success: 150 90% 45%;
-    --warning: 40 95% 55%;
-    --info: 200 95% 60%;
+    --success: 160 84% 45%;
+    --warning: 38 92% 50%;
+    --info: 199 89% 48%;
 
-    --glass-bg: hsla(222, 47%, 12%, 0.75);
-    --glass-border: hsla(262, 83%, 58%, 0.25);
+    --glass-bg: hsla(222, 47%, 10%, 0.72);
+    --glass-border: hsla(270, 91%, 65%, 0.35);
+    --glass-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
 
-    --shadow-card: 0 10px 40px -10px hsla(0, 0%, 0%, 0.6);
+    --shadow-card: 0 25px 50px -12px rgba(0, 0, 0, 0.55);
   }
 }
 
 /* ===============================
-   GLOBAL BASE
+   GLOBAL BASE – wow background & motion
 =============================== */
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   * {
     @apply border-border;
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply text-foreground font-sans antialiased;
     font-family: 'Inter', sans-serif;
-
+    /* Base dark + strong gradient orbs so the “wow” look is visible */
+    background-color: hsl(222, 47%, 5%);
     background-image:
-      radial-gradient(circle at 15% 20%, hsla(262, 83%, 58%, 0.18), transparent 45%),
-      radial-gradient(circle at 85% 75%, hsla(190, 95%, 55%, 0.18), transparent 45%),
-      linear-gradient(180deg, hsl(222,47%,8%) 0%, hsl(222,47%,9%) 100%);
+      radial-gradient(ellipse 140% 90% at 0% 0%, hsla(270, 91%, 65%, 0.35), transparent 45%),
+      radial-gradient(ellipse 120% 100% at 100% 100%, hsla(187, 92%, 55%, 0.3), transparent 45%),
+      radial-gradient(ellipse 90% 70% at 50% 40%, hsla(320, 90%, 60%, 0.18), transparent 50%),
+      linear-gradient(180deg, hsl(222, 47%, 5%) 0%, hsl(222, 45%, 7%) 50%, hsl(222, 47%, 5%) 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -74,41 +82,98 @@
 }
 
 /* ===============================
-   GLASS CARD
+   GLOBAL KEYFRAMES (movement & effects)
+=============================== */
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.7; filter: blur(80px); }
+  50% { opacity: 1; filter: blur(100px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes float-soft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes border-glow {
+  0%, 100% { box-shadow: 0 0 20px hsla(270, 91%, 65%, 0.3); }
+  50% { box-shadow: 0 0 35px hsla(270, 91%, 65%, 0.5); }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 4s ease-in-out infinite;
+}
+
+.animate-float-soft {
+  animation: float-soft 5s ease-in-out infinite;
+}
+
+.animate-border-glow {
+  animation: border-glow 2.5s ease-in-out infinite;
+}
+
+/* ===============================
+   GLASS CARD – stronger glassmorphism
 =============================== */
 
 @layer utilities {
-
   .glass {
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    box-shadow: var(--shadow-card);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow: var(--shadow-card), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
     border-radius: var(--radius);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease, border-color 0.3s ease;
   }
 
-  .glass:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 15px 50px -10px hsla(262, 83%, 58%, 0.4);
+  .glass:hover,
+  .glass-hover:hover {
+    transform: translateY(-6px) scale(1.01);
+    box-shadow: 0 28px 60px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px hsla(270, 91%, 65%, 0.4);
+    border-color: hsla(270, 91%, 65%, 0.5);
+  }
+
+  /* Navbar glass: no hover lift so the bar doesn’t move */
+  nav.glass:hover {
+    transform: none;
   }
 
   .gradient-primary {
     background: linear-gradient(
       135deg,
-      hsl(262, 83%, 58%),
+      hsl(270, 91%, 65%),
       hsl(320, 90%, 60%),
-      hsl(190, 95%, 55%)
+      hsl(187, 92%, 55%)
     );
+    box-shadow: 0 8px 32px -4px hsla(270, 91%, 65%, 0.45);
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, hsl(270, 91%, 75%), hsl(187, 92%, 65%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 
   .gradient-accent {
-    background: linear-gradient(
-      135deg,
-      hsl(190, 95%, 55%),
-      hsl(262, 83%, 58%)
-    );
+    background: linear-gradient(135deg, hsl(187, 92%, 55%), hsl(270, 91%, 65%));
+  }
+
+  /* Hero / CTA buttons – subtle scale and glow on hover */
+  button.gradient-primary,
+  a .gradient-primary {
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+  }
+  button.gradient-primary:hover,
+  a:hover .gradient-primary {
+    transform: scale(1.04);
+    box-shadow: 0 12px 40px -8px hsla(270, 91%, 65%, 0.55);
   }
 }
 
@@ -131,8 +196,8 @@ input:focus,
 textarea:focus,
 select:focus {
   outline: none;
-  border-color: hsl(262, 83%, 58%);
-  box-shadow: 0 0 0 3px hsla(262, 83%, 58%, 0.25);
+  border-color: hsl(270, 91%, 65%);
+  box-shadow: 0 0 0 3px hsla(270, 91%, 65%, 0.3);
 }
 
 /* Remove default white dropdown arrow background (Safari fix) */
@@ -162,12 +227,12 @@ select option {
 =============================== */
 
 .search-input {
-  border: 1px solid hsl(262, 83%, 58%);
-  box-shadow: 0 0 18px hsla(262, 83%, 58%, 0.35);
+  border: 1px solid hsl(270, 91%, 65%);
+  box-shadow: 0 0 18px hsla(270, 91%, 65%, 0.35);
 }
 
 .search-input:focus {
-  box-shadow: 0 0 22px hsla(262, 83%, 58%, 0.5);
+  box-shadow: 0 0 22px hsla(270, 91%, 65%, 0.5);
 }
 
 /* ===============================

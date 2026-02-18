@@ -46,26 +46,34 @@ const Stats = () => {
   return (
     <section className="py-20 relative">
       <div className="absolute inset-0 gradient-primary opacity-5" />
-      <div className="container px-4 relative">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {items.map((stat, i) => {
-            const Icon = stat.icon;
-            return (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="text-center"
-              >
-                <Icon className="w-6 h-6 text-accent mx-auto mb-3" />
-                <div className="text-2xl md:text-3xl font-bold font-display text-foreground">{stat.value}</div>
-                <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
-              </motion.div>
-            );
-          })}
-        </div>
+      <div className="container px-4 sm:px-6 relative max-w-5xl mx-auto">
+        {/* One big outer card with green border */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="rounded-2xl border-2 border-green-500/90 bg-background/40 backdrop-blur-sm p-4 sm:p-6 shadow-lg shadow-green-500/10"
+        >
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
+            {items.map((stat, i) => {
+              const Icon = stat.icon;
+              return (
+                <motion.div
+                  key={stat.label}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="rounded-xl border-2 border-red-500/80 bg-card/60 backdrop-blur-sm p-6 text-center shadow-md shadow-red-500/5"
+                >
+                  <Icon className="w-6 h-6 text-accent mx-auto mb-3" />
+                  <div className="text-2xl md:text-3xl font-bold font-display text-foreground">{stat.value}</div>
+                  <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </motion.div>
       </div>
     </section>
   );

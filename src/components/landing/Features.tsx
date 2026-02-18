@@ -14,7 +14,7 @@ const Features = () => {
   return (
     <section className="py-24 relative">
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/3 to-transparent" />
-      <div className="container px-4 relative">
+      <div className="container px-6 sm:px-8 lg:px-10 relative max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -29,7 +29,7 @@ const Features = () => {
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {features.map((feat, i) => {
             const Icon = feat.icon;
             return (
@@ -39,9 +39,9 @@ const Features = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="glass glass-hover rounded-2xl p-8 group transition-all"
+                className="glass glass-hover rounded-2xl p-8 md:p-10 flex flex-col items-center text-center group transition-all"
               >
-                <div className={`w-14 h-14 rounded-2xl ${feat.color} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform`}>
+                <div className={`w-14 h-14 rounded-2xl ${feat.color} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform shrink-0`}>
                   <Icon className="w-7 h-7" />
                 </div>
                 <h3 className="text-xl font-display font-semibold text-foreground mb-3">{feat.title}</h3>

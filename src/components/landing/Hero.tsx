@@ -207,7 +207,7 @@ const Hero = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.2, duration: 0.5 }}
-            className="inline-flex items-center gap-2 glass rounded-full px-5 py-2 mb-8"
+            className="inline-flex items-center gap-2 glass rounded-full px-5 py-2 mb-8 animate-float-soft"
           >
             <Sparkles className="w-4 h-4 text-warning" />
             <span className="text-sm text-muted-foreground">AI-Powered Service Marketplace</span>
