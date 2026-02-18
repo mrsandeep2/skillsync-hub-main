@@ -26,6 +26,11 @@ const ProviderDashboard = () => {
   const navigate = useNavigate();
   const [showAddService, setShowAddService] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
+  const [showDelayModal, setShowDelayModal] = useState(false);
+  const [delayBookingId, setDelayBookingId] = useState<string | null>(null);
+  const [delayDate, setDelayDate] = useState<string>("");
+  const [delayTime, setDelayTime] = useState<string>("");
+  const [delayMessage, setDelayMessage] = useState<string>("");
   const [newService, setNewService] = useState({
     title: "",
     description: "",
@@ -42,28 +47,38 @@ const ProviderDashboard = () => {
   // Realtime: listen for service approval changes and booking updates
   useEffect(() => {
     if (!user) return;
-    const ch1 = supabase.channel("provider-services-rt")
-      .on("postgres_changes", { event: "*", schema: "public", table: "services", filter: `provider_id=eq.${user.id}` }, () => {
-        queryClient.invalidateQueries({ queryKey: ["provider-services"] });
-      }).subscribe();
-    const ch2 = supabase.channel("provider-bookings-rt")
-      .on("postgres_changes", { event: "*", schema: "public", table: "bookings", filter: `provider_id=eq.${user.id}` }, () => {
-        queryClient.invalidateQueries({ queryKey: ["provider-bookings"] });
-      }).subscribe();
-    const ch3 = supabase.channel("provider-reviews-rt")
-      .on("postgres_changes", { event: "*", schema: "public", table: "reviews", filter: `provider_id=eq.${user.id}` }, () => {
+    
+    const ch1 = supabase.channel(`provider-services-rt-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "services", filter: `provider_id=eq.${user.id}` }, (payload) => {
+        console.log("📲 Service updated:", payload);
+        queryClient.invalidateQueries({ queryKey: ["provider-services", user.id] });
+      })
+      .subscribe((status) => console.log("Services channel:", status));
+    
+    const ch2 = supabase.channel(`provider-bookings-rt-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "bookings", filter: `provider_id=eq.${user.id}` }, (payload) => {
+        console.log("📲 Booking for provider updated:", payload);
+        queryClient.invalidateQueries({ queryKey: ["provider-bookings", user.id] });
+      })
+      .subscribe((status) => console.log("Bookings channel:", status));
+    
+    const ch3 = supabase.channel(`provider-reviews-rt-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "reviews", filter: `provider_id=eq.${user.id}` }, (payload) => {
+        console.log("📲 Review updated:", payload);
         queryClient.invalidateQueries({
           predicate: (q) =>
             Array.isArray(q.queryKey) &&
             (q.queryKey[0] === "provider-services" || q.queryKey[0] === "provider-bookings" || q.queryKey[0] === "services"),
         });
-      }).subscribe();
+      })
+      .subscribe((status) => console.log("Reviews channel:", status));
+    
     return () => {
       supabase.removeChannel(ch1);
       supabase.removeChannel(ch2);
       supabase.removeChannel(ch3);
     };
-  }, [user, queryClient]);
+  }, [user?.id, queryClient]);
 
   const { data: profile } = useQuery({
     queryKey: ["provider-profile", user?.id],
@@ -117,9 +132,71 @@ const ProviderDashboard = () => {
   };
 
   const updateBooking = async (id: string, status: string) => {
-    await supabase.from("bookings").update({ status }).eq("id", id);
-    queryClient.invalidateQueries({ queryKey: ["provider-bookings"] });
-    toast({ title: `Booking ${status}` });
+    // Optimistic update: update cache immediately for snappy UI
+    const providerKey = ["provider-bookings", user?.id];
+    const previousProvider = queryClient.getQueryData<any[]>(providerKey);
+    try {
+      // locally update provider-bookings cache
+      queryClient.setQueryData(providerKey, (old: any[] | undefined) =>
+        (old || []).map((r) => (r.id === id ? { ...r, status } : r))
+      );
+
+      // also update any my-bookings queries for seekers (best-effort)
+      const myBookingsQueries = queryClient.getQueryCache().findAll({ predicate: (q) => Array.isArray(q.queryKey) && q.queryKey[0] === "my-bookings" });
+      myBookingsQueries.forEach((q) => {
+        queryClient.setQueryData(q.queryKey as any, (old: any[] | undefined) =>
+          (old || []).map((r) => (r.id === id ? { ...r, status } : r))
+        );
+      });
+
+      const { error } = await supabase.from("bookings").update({ status }).eq("id", id);
+      if (error) throw error;
+
+      console.log(`✅ Booking ${id} updated to ${status}`);
+
+      // Invalidate to ensure server canonical state
+      await queryClient.invalidateQueries({ queryKey: ["provider-bookings", user?.id] });
+      queryClient.invalidateQueries({ predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === "my-bookings" });
+
+      toast({ title: `Booking ${status}`, description: "Updated successfully" });
+    } catch (err: any) {
+      // rollback
+      if (previousProvider) queryClient.setQueryData(providerKey, previousProvider);
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
+
+  // Extended update: allow additional fields (notes, scheduled_date, scheduled_time)
+  const updateBookingExtended = async (id: string, payload: Record<string, any>) => {
+    // Optimistic update for status and scheduling fields
+    const providerKey = ["provider-bookings", user?.id];
+    const previousProvider = queryClient.getQueryData<any[]>(providerKey);
+    try {
+      queryClient.setQueryData(providerKey, (old: any[] | undefined) =>
+        (old || []).map((r) => (r.id === id ? { ...r, ...payload } : r))
+      );
+
+      const myBookingsQueries = queryClient.getQueryCache().findAll({ predicate: (q) => Array.isArray(q.queryKey) && q.queryKey[0] === "my-bookings" });
+      myBookingsQueries.forEach((q) => {
+        queryClient.setQueryData(q.queryKey as any, (old: any[] | undefined) =>
+          (old || []).map((r) => (r.id === id ? { ...r, ...payload } : r))
+        );
+      });
+
+      const { error } = await supabase.from("bookings").update(payload).eq("id", id);
+      if (error) throw error;
+
+      console.log(`✅ Booking ${id} updated`, payload);
+
+      await queryClient.invalidateQueries({ queryKey: ["provider-bookings", user?.id] });
+      queryClient.invalidateQueries({ predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === "my-bookings" });
+      queryClient.invalidateQueries({ predicate: (query) => Array.isArray(query.queryKey) && query.queryKey[0] === "admin-orders" });
+
+      toast({ title: "Booking updated", description: "Status updated successfully" });
+    } catch (err: any) {
+      if (previousProvider) queryClient.setQueryData(providerKey, previousProvider);
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
   };
 
   const addServiceMutation = useMutation({
@@ -242,12 +319,22 @@ const ProviderDashboard = () => {
                           <Button variant="ghost" size="sm" className="rounded-lg text-destructive" onClick={() => updateBooking(b.id, "cancelled")}>Decline</Button>
                         </div>
                       ) : (
-                        <span className={`text-xs px-3 py-1 rounded-full font-medium ${
-                          b.status === "completed" ? "bg-success/20 text-success" :
-                          b.status === "confirmed" ? "bg-info/20 text-info" :
-                          b.status === "cancelled" ? "bg-destructive/20 text-destructive" :
-                          "bg-warning/20 text-warning"
-                        }`}>{b.status}</span>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xs px-3 py-1 rounded-full font-medium ${
+                            b.status === "completed" ? "bg-success/20 text-success" :
+                            b.status === "confirmed" ? "bg-info/20 text-info" :
+                            b.status === "cancelled" ? "bg-destructive/20 text-destructive" :
+                            "bg-warning/20 text-warning"
+                          }`}>{b.status}</span>
+                          {/* Provider actions for ongoing booking */}
+                          {b.status !== "completed" && b.status !== "cancelled" && (
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline" onClick={() => updateBooking(b.id, "in_progress")}>Mark Working</Button>
+                              <Button size="sm" variant="ghost" onClick={() => { setDelayBookingId(b.id); setShowDelayModal(true); }}>Delay</Button>
+                              <Button size="sm" variant="hero" onClick={() => updateBooking(b.id, "completed")}>Mark Completed</Button>
+                            </div>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -370,6 +457,46 @@ const ProviderDashboard = () => {
                 <Button variant="hero" className="w-full rounded-xl h-11 mt-6" onClick={saveProfile}>
                   <Save className="w-4 h-4 mr-1" /> Save Changes
                 </Button>
+              </motion.div>
+            </div>
+          )}
+
+          {/* Delay Modal */}
+          {showDelayModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4" onClick={() => setShowDelayModal(false)}>
+              <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass rounded-2xl p-6 w-full max-w-md relative" onClick={(e) => e.stopPropagation()}>
+                <button onClick={() => setShowDelayModal(false)} className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"><X className="w-5 h-5" /></button>
+                <h3 className="text-xl font-semibold mb-4">Set Delay / Reschedule</h3>
+                <div className="space-y-3">
+                  <div>
+                    <Label>Next Date</Label>
+                    <Input type="date" value={delayDate} onChange={(e) => setDelayDate(e.target.value)} className="bg-secondary/50" />
+                  </div>
+                  <div>
+                    <Label>Next Time</Label>
+                    <Input type="time" value={delayTime} onChange={(e) => setDelayTime(e.target.value)} className="bg-secondary/50" />
+                  </div>
+                  <div>
+                    <Label>Message / Reason</Label>
+                    <Input value={delayMessage} onChange={(e) => setDelayMessage(e.target.value)} className="bg-secondary/50" placeholder="e.g. Running late, will reach by 2 days" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 mt-4">
+                  <Button variant="hero" onClick={async () => {
+                    if (!delayBookingId) return;
+                    const payload: any = { status: "in_progress" };
+                    if (delayDate) payload.scheduled_date = delayDate;
+                    if (delayTime) payload.scheduled_time = delayTime;
+                    if (delayMessage) payload.notes = (delayMessage || "") + ("\n(Rescheduled by provider)");
+                    await updateBookingExtended(delayBookingId, payload);
+                    setShowDelayModal(false);
+                    setDelayBookingId(null);
+                    setDelayDate("");
+                    setDelayTime("");
+                    setDelayMessage("");
+                  }}>Save</Button>
+                  <Button variant="ghost" onClick={() => { setShowDelayModal(false); setDelayBookingId(null); }}>Cancel</Button>
+                </div>
               </motion.div>
             </div>
           )}

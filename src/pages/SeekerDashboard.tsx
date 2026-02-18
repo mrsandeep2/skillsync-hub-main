@@ -51,30 +51,95 @@ const SeekerDashboard = () => {
     }
   }, [profile]);
 
-  const { data: bookings = [] } = useQuery({
+  const { data: bookings = [], error: bookingsError, isLoading: bookingsLoading } = useQuery({
     queryKey: ["my-bookings", user?.id],
     queryFn: async () => {
-      if (!user) return [];
-      const { data } = await supabase
+      if (!user) {
+        console.log("❌ No user, skipping bookings query");
+        return [];
+      }
+      console.log("🔍 Fetching bookings for seeker:", user.id);
+
+      // Fetch bookings without attempting to auto-join profiles (rest returns 400 if no FK exists)
+      const { data, error } = await supabase
         .from("bookings")
-        .select("*, services(title), profiles:provider_id(name, is_available)")
+        .select("*, services(title)")
         .eq("seeker_id", user.id)
         .order("created_at", { ascending: false });
-      return data ?? [];
+
+      if (error) {
+        console.error("❌ Bookings query error:", error);
+        throw error;
+      }
+
+      const rows = data ?? [];
+      console.log("✅ Bookings fetched:", rows.length, "bookings", rows);
+
+      // Enrich each booking with provider profile (profiles table is keyed by id)
+      const enriched = await Promise.all(rows.map(async (b: any) => {
+        try {
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("name, is_available")
+            .eq("id", b.provider_id)
+            .maybeSingle();
+          return { ...b, profiles: profileData ?? null };
+        } catch (e) {
+          return { ...b, profiles: null };
+        }
+      }));
+
+      return enriched;
     },
     enabled: !!user,
+    retry: 3,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
+
+  // Log any errors
+  useEffect(() => {
+    if (bookingsError) {
+      console.error("📍 Bookings error in component:", bookingsError);
+      toast({ 
+        title: "Error loading orders", 
+        description: bookingsError.message, 
+        variant: "destructive" 
+      });
+    }
+  }, [bookingsError]);
+
+  useEffect(() => {
+    if (!loading && user) {
+      console.log("👤 User loaded:", user.id);
+      // Force initial fetch of bookings
+      queryClient.invalidateQueries({ queryKey: ["my-bookings", user.id] });
+    }
+  }, [user?.id, loading, queryClient]);
 
   useEffect(() => {
     if (!user) return;
     const channel = supabase
-      .channel("bookings-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "bookings", filter: `seeker_id=eq.${user.id}` }, () => {
-        queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [user, queryClient]);
+      .channel(`bookings-realtime-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "bookings",
+          filter: `seeker_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log("📲 Booking updated for seeker:", payload);
+          queryClient.invalidateQueries({ queryKey: ["my-bookings", user.id] });
+        }
+      )
+      .subscribe((status) => {
+        console.log("📡 Bookings subscription status:", status);
+      });
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, queryClient]);
 
   // Realtime: reflect profile/availability changes (name, location, provider online)
   useEffect(() => {
@@ -114,6 +179,17 @@ const SeekerDashboard = () => {
   const active = bookings.filter((b: any) => ["pending", "confirmed", "in_progress"].includes(b.status)).length;
   const completed = bookings.filter((b: any) => b.status === "completed").length;
   const totalSpent = bookings.filter((b: any) => b.status === "completed").reduce((s: number, b: any) => s + Number(b.amount), 0);
+
+  // Debug logging
+  console.log("📊 Seeker Dashboard State:", {
+    userId: user?.id,
+    totalBookings: bookings.length,
+    activeCount: active,
+    completedCount: completed,
+    bookingsData: bookings,
+    isLoading: bookingsLoading,
+    error: bookingsError,
+  });
 
   return (
     <div className="min-h-screen bg-background seeker-dashboard-root">
@@ -162,9 +238,32 @@ const SeekerDashboard = () => {
           </div>
 
           <div className="glass rounded-2xl p-6">
-            <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-display font-semibold text-foreground">Recent Orders</h2>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  console.log("🔄 Manual refresh triggered");
+                  queryClient.invalidateQueries({ queryKey: ["my-bookings", user?.id] });
+                }}
+              >
+                🔄 Refresh
+              </Button>
             </div>
+
+            {bookingsLoading && <p className="text-muted-foreground text-center py-4">Loading orders...</p>}
+            
+            {bookingsError && (
+              <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30 mb-4">
+                <p className="text-sm text-destructive">
+                  <strong>Error:</strong> {(bookingsError as any)?.message || "Failed to load orders"}
+                </p>
+              </div>
+            )}
+
+            {/* Debug panel removed for better UX (was shown only in development) */}
+
             {bookings.length === 0 ? (
               <p className="text-muted-foreground text-center py-8">No orders yet. Browse services to get started!</p>
             ) : (

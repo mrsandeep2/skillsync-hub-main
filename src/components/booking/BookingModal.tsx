@@ -35,6 +35,15 @@ const BookingModal = ({ service, onClose }: BookingModalProps) => {
       navigate("/login");
       return;
     }
+
+    console.log("🎯 Creating booking with:", {
+      seeker_id: user.id,
+      seeker_email: user.email,
+      provider_id: service.provider_id,
+      service_id: service.id,
+      amount: service.price,
+    });
+
     setLoading(true);
     const { error } = await supabase.from("bookings").insert({
       seeker_id: user.id,
@@ -47,9 +56,12 @@ const BookingModal = ({ service, onClose }: BookingModalProps) => {
       status: "pending",
     });
     setLoading(false);
+
     if (error) {
+      console.error("❌ Booking creation failed:", error);
       toast({ title: "Booking failed", description: error.message, variant: "destructive" });
     } else {
+      console.log("✅ Booking created successfully!");
       setStep("success");
     }
   };
